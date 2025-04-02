@@ -1,0 +1,112 @@
+---
+title: "ASSIGNMENT ONE"
+author: "ETANA DISASA"
+date: "5/14/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## USING R TO UNDERSTAND A DATASET
+### INTRODUCTION
+This assignment attepts to utilize a number of R commands to read, analyze and interpret data acquired from the datasets and to provide insight. The first dataset utilized was recovered from the U.S. Vetrans Affairs website <https://www.va.gov/vetdata/docs/SpecialReports/Vietnam_Veterans_by_State.xlsx>. The second one is R's built-in Iris dataset.
+
+### R Commands
+#### 1. [read_excell] Command
+This command is part of the readxl library. Therefore, the library must be called first for the command to return result. This command imports Mircosoft Excel (XLSX) files. 
+
+```{r readxl}
+library(readxl)
+Veterans <- read_excel("Vietnam_Veterans_by_State.xlsx")
+```
+
+##### 2. [names( )] Command
+Once the dataset is imported, the names() command reads the different attributes/variables in the dataset. In other words, in this case it lists the names of the columns of the table. The result is, we have 15 Variables in this dataset. 
+```{r names}
+names(Veterans)
+```
+##### 3. [head( )] Command
+This command reads the first few lines of a dataset. In this case, the dataset used is "Iris". 
+```{r head}
+head(iris)
+```
+##### 4. [tail( )] Command
+Similar to the head() command, the tail command reads the last few lines of observation from the dataset. 
+```{r tail}
+tail(iris)
+```
+##### 5. [summary( )] Command
+This command provides the summaries for each variable in the dataset. 
+```{r summary}
+summary(iris)
+```
+##### 6. [sum( )] Command
+This command returns the summation of all observations in one column of the dataset where all observations are numeric. In this case, the command is reading Sepal.Length column in the Iris dataset. 
+```{r sum}
+sum(iris$Sepal.Length)
+```
+##### 7. [mean( )] Command
+The mean command returns the mean of the specified variable in the dataset. 
+```{r mean}
+mean(iris$Sepal.Length)
+```
+##### 8. [median( )] Command
+The median comman returns the median of the specified variable. In this case. Sepal.Width is the variable considered and the result is 3. 
+```{r median}
+median(iris$Sepal.Width)
+```
+##### 9. [sd( )] Command
+The sd command returns the standard deviation of a variable within the dataset; here, the standard deviation for the petal length (Petal.Length) is approximately 1.77. 
+```{r sd}
+sd(iris$Petal.Length)
+```
+##### 10. [var( )] Command
+The var command returns the variance of the specified variable within the dataset. The variance among the observed 150 flowers, the mean petal width (Petal.Width) is approximately 1.2.  
+```{r var}
+mean(iris$Petal.Width)
+```
+##### 11. [cor( )] Command
+The cor command returns the correlation between two numeric variables. In this case, Sepal.Length and Petal.Length has an approximately  87% correlation. 
+```{r cor}
+cor(iris$Sepal.Length, iris$Petal.Length)
+```
+
+
+
+##### 12. [hist( )] Command
+The hist command plots a histogram. Below, the histogram displays that the mean sepal width is about 3 units which is the result found per the mean() command. 
+```{r hist}
+hist(iris$Sepal.Width)
+```
+
+
+
+##### 13. [barplot( )] Command
+The barplot command plots a bar plot. The plot below displays that the petal length of the observed flowers is much longer from Setosa to Versicolor to Virginica.
+```{r barplot}
+barplot(iris$Petal.Length)
+```
+
+
+##### 14. [boxplot( )] Command
+The boxplot command plots a box plot. Per the box plot, the minimum and maximum petal lengths observed are approximately 1 and 7 units. The median is about 4.5 units. 
+```{r boxplot}
+boxplot(iris$Petal.Length)
+```
+
+
+##### 15. [plot( )] Command
+The plot command creates a simple plot. Accordingly, the petal width of the observed flowers appears to be more and more wide from Setora to Versicolor to Virginica. 
+```{r plot}
+plot(iris$Petal.Width)
+```
+
+
+
+### Conclusion
+R offers several commands. The above discussed commands read data, perform descriptive statistics and generate graphical displays of findings. 
+
+### References
+Department of Veterans Affairs. (2014). Vietnam_Veterans_by_State. <https://www.va.gov/vetdata/docs/SpecialReports/Vietnam_Veterans_by_State.xlsx>

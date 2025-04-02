@@ -1,0 +1,149 @@
+---
+title: "Linear Regression Using R"
+author: "Etana Disasa"
+date: "5/21/2019"
+output:
+  html_document: default
+---
+
+### Introduction
+
+One of the datasets R comes with is Boston, a dataset with housing values in the suburbs of Boston. In order to access this dataset, the MASS libary must be called. 
+
+```{r mass}
+suppressMessages(library(MASS))   # This library needs to be called in order to access the Boston dataset. 
+suppressMessages(library(caret))  # This library is called for the 'cor' function--measures correlations between to variables--to work.
+suppressMessages(library(graphics))# The 'abline' command uses this library.
+library(ggplot2)
+```
+#### Description of Dataset
+The Boston dataset is a `r class(Boston)`. This data frame has `r nrow(Boston)` rows (observations) and `r ncol(Boston)` columns (variables). These variables are `r names(Boston)`.
+
+
+#### Data Exploration
+##### Distance to Five Employment Centers in Boston
+
+The histogram below displays the weighted mean distance to five employment centers in Boston. The median weighted mean distance is `r median(Boston$dis)` units where the longest and shortest weighted mean distances are `r max(Boston$dis)` and `r min(Boston$dis)` units respectively. 
+
+```{r disHist}
+hist(Boston$dis, main = "Weighted Mean of Distances to Five Boston Employment Centers.", xlab = "Distance")
+```
+
+##### Pupil-Teacher Ratio
+This histogram below shows that the median number of a teachers students must share is `r median(Boston$ptratio)` in some cases it goest upto `r max(Boston$ptratio)` students per teacher. 
+```{r ptratioHist}
+hist(Boston$ptratio, main = 'Pupil-Teacher Ratio by Town', xlab ='Pupil-Teacher Ratio')
+```
+
+
+### Correlations
+In order to determine correlation between variables, the 'cor' command may be used. It offers results between -1 to 1. If results are more close to the two polars of -1 and 1, one can determine a negative and positive correlation respectively. If the result is significanly close to 0, then no correlation can be determined between the variables in analysis. 
+
+##### Positive Correlation
+```{r scatterplot1}
+plot(x = Boston$rm, y = Boston$medv, xlab = 'Average Number of Rooms per Dwelling', ylab = 'Median Value of Owner-occupied Homes in /$1000s', pch = 20, main='Scatterplot 1')
+```
+
+
+The above scatter plot displays a positive correlation of `r cor(Boston$rm, Boston$medv)` between the average number of rooms per dwelling and the median value of owner-occupied homes in \$1000s. In other words, it is appears that the median value of a home is directly related to the average number of rooms per dwelling. This is a great example of positive correlation of variables in this dataset. 
+
+
+##### Negative Correlations
+Variables may also have negative correlations. This is where a observations in a particular variable are reversely related to observations in another variable. This means, when the values observed increase for one variable, the values observed decrease for the other. The scatter plot below is presented as an example. 
+```{r scatterplot2 }
+plot(x = Boston$rm, y = Boston$lstat, xlab = 'Average Number of Rooms per Dwelling', ylab = 'Lower Status of the Population', pch=20, main='Scatterplot 2')
+```
+
+
+
+The above scatter plot displays a negative correlation of `r cor(Boston$rm, Boston$lstat)` between the average number of rooms per dwelling and lower status of the population. The number of rooms per dwelling indicates a decrease in the lower status of the population. 
+
+##### No Correlation
+When two or more sets of variables have no correlation whatsoever, either a positive or a negative correlation may be observed. The example below provides an example of no correlation between the index of accessibility to radial highways and Charles River dummy variable. 
+```{r scatterplot3 }
+plot(x = Boston$rad, y = Boston$chas, xlab = 'Index of Accessibility to Radial Highways', ylab = 'Charles River Dummy Variable', pch = 20, main='Scatterplot 3')
+```
+
+
+The observed correlation is `r cor(Boston$rad, Boston$chas)` between index of accessibility of radial highways and the Charles River dummy which is significantly close to 0 than 1. This number is not signicant enough to suggest that there is either a positive or a negative correlation. Therefore, it can be determined that there is no correlation between these two variables.
+
+### Analysis
+#### Selecting Variables
+The selected variables are 'rad' (index of accessibility of radial highways) and 'tax' (full-value property-tax rate per \$10,0000). The objective here is to analyze if there is any meaninful correlation with property tax rates and accessiblity to radial highways  in the Boston area. Below is the scatter plot of these variable. Below is the scatter plot of the chosen variables. 
+```{r scatterplot4}
+plot(x = Boston$rad, y = Boston$tax, xlab = 'Index of Accessibility to Radial Highways.', ylab = 'Full-Value Property-Tax Rate Per $10,000', pch = 20, main='Scatterplot 4')
+```
+
+#### Linear Regression
+
+```{r regress}
+regression <- lm(Boston$tax~Boston$rad)
+regression
+summary(regression)
+```
+
+
+The null and the alternative hypothesis are as below.
+
+    H0: There is no correlation between index of accessibility to radial highways and full-value property-tax rate per $10,000. 
+
+    H1: There is correlation between index of accessibility to radial highways and full-value property-tax rate per $10,000. 
+
+#### The Formula in R
+```{r linreg}
+regression <- lm(Boston$tax~Boston$rad)
+regression
+```
+#### Confidence Intervals
+```{r confint}
+confint(regression)
+summary(regression)
+```
+
+
+#### Explaining the Result
+Per the summary of the linear regression, the p-value is 2.2e-16 which is significantly <0.01. Therefore, we reject the null hypothesis. Thus, there is a significant correlation between the predictor variable (rad) and the dependant variable (tax).
+
+#### Explaining the Linear Relationship
+The relationship between the two chosen variable is significant. There is a positive correlation of `r cor(Boston$rad,Boston$tax)` (>91%) which strongly suggests that accessibility to highways is positively correlated to the amount of money one pays in taxes. 
+```{r explainedPlot }
+plot(Boston$tax~Boston$rad, xlab = 'Index of Accessibility to Radial Highways', ylab = 'Full-Value Property-Tax Rate Per $10,000', pch = 20, main='Scatterplot 5')
+```
+
+
+The graph below displays the above plot alongside the linear regression line y-intercept of 239.9 and slope of 17.62.
+```{r explainedggplot}
+ggplot(Boston, aes(x = rad, y = tax)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red")
+```
+
+#### Verifying the Model Assumptions
+
+```{r model}
+par(mfrow=c(2,2))
+plot(regression)
+
+```
+
+
+The above regression plot has four different diagnostic plots. The par(mfrow=c(2,2)) command line helps display these plots in two rows and two columns. 
+
+##### 1. Residuals vs Fitted Plot
+This plot displays if the residuals have non-linear patterns. If there is a non-linear relationship between the predictor variable and the outcome variable, and the model did not capture it; then that pattern could show up here in this plot. In other words, if the model did a good job of capturing such non-linear patterns, the plot will not have discernable linear pattersn. Per the above resituals vs fitted plot, there is not a discernable linear patter displayed. Therefore, this plot suggests that the model has performed well in this regard. 
+
+##### 2. Normal Q-Q Plot
+This plot shows if residuals are normally distributted following a straight line well. If there are abvious deviations, then it may be concluded that the model did not do well. There are a handfull of observations that are deviating (hard to make out but somewhere in the 490's). But over all, even though not perfect, the plot appears to have lined up with the straight dashed line. 
+
+##### 3. Scale-Location Plot 
+This plot, also called Spread-Location plot, shows if residuals are spread equally along the ranges of predictors also known as homoscedasticity. The model above has a relatively fairly spread out(random) residuals while the line is more horizontal that it has a steep vertical climb. 
+
+##### 4. Residuals vs Leverage
+Here, this plot helps identify observations that are outliers and whose effects can be influental if excluded from the analysis. Here, patterns might not be what to watch for. But rather to see if the Cook's distrances are minimal. In the above plot, most observations are with in the Cook's distance red dashed line. Some observation (the group of observations in the 490's) are left outside of the Cook's distrance line; therefore, there will be a significant effect if excluded in the analysis. 
+
+### Conclusion
+This excercise had helped me to understand how to findout if observations within a dataset have correlations. It has also helped me understand how linear regression helps solidify the assumption of correlation between variables by providing more extensive identifiers such as p-values, residual standard error and the diagnostic plots to check of the regression model is verifiable. 
+
+### References
+<https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/Boston.html>
+<https://data.library.virginia.edu/diagnostic-plots/>
