@@ -1,0 +1,128 @@
+---
+title: "KNN from Scratch"
+author: "Etana Disasa"
+date: "9/9/2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r message=FALSE, echo=FALSE}
+rm(list = ls()) # Removes all objects to prevent results from previous runs being carried over into new runs.
+graphics.off()  # Clears the graphic plots window
+cat("\014")     # Clears the console
+```
+
+
+## Introduction
+
+The k-nearest neigbors (KNN) algorithm is a supervised machine learning algorithm that is used to do classification and regression problems. This algorithm works with the assumption that similar things exist in close proximity. This passignment helps us understand some of the processes that take place: 
+<ol>
+  <li> Loading a dataset</li>
+  <li> Selecting a datapoint to work with </li>
+  <li> Setting K for the chosen number of neighbors</li>
+  <li> Calculating the distance between the dataset and the data point
+    <ol>
+      <li> Adding the distance into the existing dataset</li>
+      <li> Sorting the updated dataset from the smallest to the largest distance</li>
+      <li> Picking the first K entries from the sorted collection</li>
+    </ol>
+  </li>
+  <li> Getting the labels of the selected K entries</li>
+  <li> Offer determination</li>
+  <ol>
+    <li> If it is regression, return the mean of the K labels</li>
+    <li> If it is clssifiction, return the mode of the K labels</li>
+  </ol>
+</ol>
+
+## Methods
+### 1. Aqcuiring and Exploring the Dataset
+For this project, the `iris` dataset is used. We will explore what the data can tell us before working on it. 
+
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+MyIris <- iris
+qplot(Petal.Length, Petal.Width, data=MyIris, color=Species, 
+   main="Scatterplots of the Iris Database",
+   xlab="Petal Length", ylab="Petal Width")
+```
+
+### 2. Selecting a Datapoint 
+According to this plot, the three serota, versicolor and virginica species are represented in three different colors. Now, let us create a new iris with a petal length of 2.25 and petal width of 0.75 units as a test data point. This new iris is represented in a black 'x' on the scatter plot below. 
+
+```{r}
+
+MyIrisPoint <- data.frame("Petal.Length"= 2.25, "Petal.Width"=0.75)
+qplot(Petal.Length, Petal.Width, data=MyIris, color=Species, 
+   main="Scatterplots of the Iris Database",
+   xlab="Petal Length", ylab="Petal Width") +
+  geom_point(data=MyIrisPoint, aes(x=Petal.Length, y=Petal.Width), color="black", pch=4)
+```
+
+### 3. Setting K and Writing the Eucledian Distance Function Code
+The function below, therefore, measures the Eucledian distance from our test point aka `MyIrisPoint`. We are also defining K to be 5.
+
+```{r}
+MyK = 5
+EuDis<-function(x,y){
+  return(
+    sqrt(((x - MyIrisPoint$Petal.Length)^2) + ((y - MyIrisPoint$Petal.Width)^2))
+  )
+}
+
+```
+
+### 4. Calculating Distance
+Now, using this function `EuDis`, we will try to find out the distance of each iris in reference to our data point. Then, it will put the results in a new column named `Dist` for each of the 150 irises. We can see what the first 5 entries with their prospective Eucledean distances look like from below. 
+
+
+#### 4.1 Calculating and Saving the Distance in a New Column 'Dis'
+```{r}
+MyIris$Dist <- mapply(FUN = EuDis, MyIris$Petal.Length,MyIris$Petal.Width)
+head(MyIris, n=MyK)
+```
+
+#### 4.2 Sorting by Distance
+This next step reorders `MyIris` in an ascending order by `Dist` which the Eucledian distance from our data point `MyIrisPoint`.  
+
+```{r}
+attach(MyIris); MyIris <- MyIris[order(Dist),];detach(MyIris)
+head(MyIris, n=MyK)
+```
+
+### 5. Offer Determiantion
+Now, because this is a classifcation task, using the Mode function from the DescTools library, we will be able to determine what classification this iris flower is. Per our findings:
+```{r}
+paste ('The new Iris is classified as belonging to the',
+       DescTools::Mode(MyIris[1:MyK, 5]),
+      'species.'
+      )
+```
+
+## A New Data Point and K Value for FUN ;)
+Now, lets change our data point (iris flower) with a petal length of 4.82 and petal width of 1.65 units and repeat all the above steps. 
+```{r}
+MyK = 4
+MyIrisPoint <- data.frame("Petal.Length"= 4.82, "Petal.Width"=1.65)
+MyIris <- iris
+MyIris$Dist <- mapply(FUN = EuDis, MyIris$Petal.Length,MyIris$Petal.Width)
+attach(MyIris); MyIris <- MyIris[order(Dist),];detach(MyIris)
+head(MyIris, n=MyK)
+paste ('The new Iris is classified as belonging to the',
+      DescTools::Mode(MyIris[1:MyK, 5]),
+      'species.'
+      )
+```
+
+In this case, given K = 4, the Mode produced two contenders, versicolor and virginica. As a result our determination was not conclusive. Therefore, given our new datapoint iris having a petal length of 4.82 and petal width of 1.65, our conclusion says that it could either be a versicolor or a virginica. 
+
+# Conclusion
+KNN is a supervised machine algorithm that helps make a determination of either classification or regression problems. This approach works on the assumption that similar things exist in close proximity. Therefore, K is like a radius in which things exist next to a datapoint we are examining. 
+
+During this project, we have used Eucledian distance calculating function in order to determine the distance between the datapoint and each iris flower. In our second assignment of a datapoint and keeping K = 4, we could not decide what to expect. Therefore, in these cases, adding more variables into the Eucledian distance function may help make a determination. Furthermore, working on decreasing the K value may also offer a way to make a meaningful determination. 
+
+# References
+https://towardsdatascience.com/machine-learning-basics-with-the-k-nearest-neighbors-algorithm-6a6e71d01761 <br>
+
+

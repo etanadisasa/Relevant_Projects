@@ -1,0 +1,217 @@
+---
+title: "Naïve Bayes/Bayesian Network"
+author: "Etana Disasa"
+date: "9/18/2019"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+```{r}
+library(e1071)
+library(tm)
+library(wordcloud)
+library(reshape2)
+library(gmodels) 
+library(ngram) 
+library(base)
+```
+
+# Introduction
+##### Bayes theorem describes the probabilyt of an event based on data from prior events. This theorem lays out that when event A and B are dependent, `P(A|B) = P(B|A)*P(A)/P(B) = P(A∩B)/P(B)`. <br>In other words, P(A) being the prior probability of event A, P(B) is the marginal liklihood of event B and P(A∩B) is the likelihood of event A occuring given A, then <b>`Posterior Probability = likelihood * prior probability/marginal likelihood`</b> 
+
+# Method
+##### For this assignment we are using a dataset with thousands of SMS message data with each test labeled either  a spam or not spam (ham). The two events Spam and Ham are independent events. However, the occurence of words in these messages overlap. Therefore, the Bayes theorem approach would help us identify if a text is a spam or ham given prior data of events where certain words are found in these messages. 
+
+## Acquiring and Preparing Data
+```{r message=FALSE, warning=FALSE}
+MyData = read.delim(file = "SMSSpamCollection", sep = "\t", quote="", stringsAsFactors = F, header = FALSE)
+str(MyData)
+```
+
+##### As you may see, this data set comes with no file name extension. The SMS entries are separated by "\t". It also has no header for the columns. Therefore, we would need to convert that to something appropriate for this assignment. We must also convert the 'Type' feature into a factor. 
+
+```{r message=FALSE, warning=FALSE}
+data.table::setnames(MyData, old=c("V1","V2"), new=c("Type", "Message"))
+MyData$Type <- as.factor(MyData$Type)
+str(MyData)
+```
+##### There are `r nrow(MyData)` number of SMS messages. Below is the ratio of ham and sam messages in the dataset. I have rounded the findings off to the nearest 1. Therefore, P(Ham) and P(Spam) will be ` rround(prop.table(table(MyData$Type))*100, digits = 0)` percents consequitively. 
+
+```{r message=FALSE, warning=FALSE}
+round(prop.table(table(MyData$Type))*100, digits = 0)
+```
+
+## Data Preparation
+##### Using the <b>'tm'</b> library, we will not create a collection of documents from each of the sms messages. Below, you will see there will be 5574 docs. 
+```{r message=FALSE, warning=FALSE}
+MyCorpus <- VCorpus(VectorSource(MyData$Message)) # Here on the 'tm' library is in use. 
+MyCorpus
+```
+
+##### Inspecting the docs, in this case, the first 4, will show how many characters are in each docs. 
+```{r message=FALSE, warning=FALSE}
+inspect(MyCorpus[1:4])
+```
+
+### Data Clean Up
+##### Below, we will use the <b>'tm_map()'</b> function to clean up our docs. 
+```{r message=FALSE, warning=FALSE}
+MyCleanCorpus <- tm_map(MyCorpus, tolower) # convert to lower cases
+MyCleanCorpus <- tm_map(MyCleanCorpus, removeNumbers) # remove numbers/digits
+MyCleanCorpus <- tm_map(MyCleanCorpus, removeWords, stopwords()) # eliminate frequent words, prepositions, articles
+MyCleanCorpus <- tm_map(MyCleanCorpus, removePunctuation) #removes punctuations
+MyCleanCorpus <- tm_map(MyCleanCorpus, stripWhitespace) #removes unnecessary spaces [ ] and keep them to 1
+inspect(MyCorpus[[1]]);inspect(MyCleanCorpus[1])
+# Below is the comparisons of the first two docs of the original and the cleaned corpus consequitively.
+```
+
+##### Using sparse matrix, we will tokenize each SMS message into words. The columns are the union of words in our corpus and the rows will correspond to each text message and each cell will be the number of observations each word occurs. 
+```{r message=FALSE, warning=FALSE}
+MyCleanCorpus <- tm_map(MyCleanCorpus, PlainTextDocument) # Convert MyClearnCorpus into a plain text. 
+MyDTM <- DocumentTermMatrix(MyCleanCorpus)
+dim(MyDTM) # Dimensions of this matrix
+```
+
+## Splitting Training and Test Sets
+##### We will be using a random line of seperating the training and test set into 3:1 ratio. 
+```{r message=FALSE, warning=FALSE}
+# Split the original data
+MyTrain <- MyData[1:4200, ]
+MyTest <- MyData[4201:5574, ]
+# Here we split the document-term matrix
+MyDTMTrain = MyDTM[1:4200, ]
+MyDTMTest  = MyDTM[4201:5574, ]
+# Split the corpus data
+MyCleanCorpusTrain = MyCleanCorpus[1:4200]
+MyCleanCorpusTest  = MyCleanCorpus[4201:5574]
+# Now, examining if the Training and Test data both have relatively similar ration of ham and spam will be important. 
+round(prop.table(table(MyTrain$Type))*100, digits = 0)
+round(prop.table(table(MyTest$Type))*100, digits = 0)
+```
+
+## Visualization using WordClouds
+##### Word clouds show a colage of words in different sizes where the words with occuring more frequency will appear larger than the words with fewer frequency of appearance. 
+```{r message=FALSE, warning=FALSE}
+library(wordcloud)
+wordcloud(MyTrain$Message, min.freq=40, random.order = FALSE, colors = brewer.pal(7, "Paired")) # Words with less than 40 occurence are omitted here. 
+```
+
+##### Now, we can also do a word cloud for the training data that is spam and that is ham.
+```{r message=FALSE, warning=FALSE}
+spam <- subset(MyData, Type == "spam", )
+ham <- subset(MyData, Type == "ham")
+wordcloud(spam$Message, max.words = 60, colors = brewer.pal(7, "Paired"), main="Etana", random.order = FALSE)
+```
+
+```{r message=FALSE, warning=FALSE}
+wordcloud(ham$Message, max.words = 60, colors = brewer.pal(7, "Paired"), random.color = TRUE, random.order = FALSE)
+```
+
+##### Below, we will try to find frquently occuring words as indecator features. Since the DTM has several thousands of words, we want to focus on the words that are occuring more than others, in this case at least 5 times. 
+```{r message=FALSE, warning=FALSE}
+freq_terms <- findFreqTerms(MyDTMTrain, 5)
+reduced_dtm.train <- DocumentTermMatrix(MyCleanCorpusTrain, list(dictionary=freq_terms))
+reduced_dtm.test <- DocumentTermMatrix(MyCleanCorpusTest, list(dictionary=freq_terms))
+ncol(reduced_dtm.train)
+ncol(reduced_dtm.test)
+```
+
+##### We have `1231` words to consider. Now, lets convert these 0's and 1's in our matrix into factors for the Naïve Bayes function may work. 
+```{r message=FALSE, warning=FALSE}
+convert_counts = function(x) {
+  x = ifelse(x > 0, 1, 0)
+  x = factor(x, levels = c(0, 1), labels = c("No", "Yes"))
+  return(x)
+}
+```
+
+##### Running the Function
+```{r message=FALSE, warning=FALSE}
+reduced_dtm.train <- apply(reduced_dtm.train, MARGIN = 2, convert_counts)
+reduced_dtm.test <- apply(reduced_dtm.test, MARGIN = 2, convert_counts)
+```
+
+## Training Model
+##### This process will have two steps. The first one will be to call the naiveBayes() function and train. The second one is to predict. 
+
+
+
+```{r message=FALSE, warning=FALSE}
+sms_classifier = naiveBayes(reduced_dtm.train, MyTrain$Type)
+sms_test.predicted = predict(sms_classifier, reduced_dtm.test)
+CrossTable (sms_test.predicted, 
+            MyTest$Type, 
+           prop.chisq = FALSE, 
+           prop.t = FALSE,
+           dnn = c("predcited", "actual"))
+```
+
+## Improving the Model
+###### The graph above shows that 6/1196 ham messages were classified as spam. The error here was 0.05% which appears to look good. However, out of the 178 spams, 28 passed for ham which is significanly important to reduce. Therefore, let us use the Laplace estimator to enhance the model. 
+
+```{r message=FALSE, warning=FALSE}
+sms_classifier2 = naiveBayes(reduced_dtm.train, MyTrain$Type, laplace = 2)
+sms_test.predicted2 = predict(sms_classifier2, reduced_dtm.test)
+CrossTable (sms_test.predicted2,
+           MyTest$Type,
+           prop.chisq = FALSE, # as before
+           prop.t     = FALSE, # eliminate cell proprtions
+           dnn        = c("predicted", "actual")) # relabels rows+cols
+```
+
+##### The above attempt to enhance the model appears to have a positive effect on reducing the wrong ham prediction. Neverthless, the spam prediction error went up significanly. Therefore, in this case the best prediction remain when the Laplace estimator is not used. 
+
+## Top Five Words only Used
+##### Below, I'm declaring a function that will return the top 5 frequently used words which I will use in my dictionary.
+
+```{r message=FALSE, warning=FALSE}
+MyTopFive <- as.matrix(MyDTMTrain)
+MyTopFive <- colSums(MyTopFive)
+MyTopFive <- melt(MyTopFive)
+MyTopFive <- head(sort(rowSums(MyTopFive), decreasing=TRUE), 5)
+MyTopFive <- melt(MyTopFive)
+MyTopFive <- dimnames(MyTopFive)[[1]]
+MyTopFive
+```
+
+##### The above five words are the 5 most frequently occuring words we will use to train our model. 
+```{r message=FALSE, warning=FALSE}
+reduced_dtm.train <- DocumentTermMatrix(MyCleanCorpusTrain, list(dictionary=MyTopFive))
+reduced_dtm.test <- DocumentTermMatrix(MyCleanCorpusTest, list(dictionary=MyTopFive))
+ncol(reduced_dtm.train)
+ncol(reduced_dtm.test)
+```
+
+##### We will apply `convert_count` function once again.
+```{r message=FALSE, warning=FALSE}
+reduced_dtm.train <- apply(reduced_dtm.train, MARGIN = 2, convert_counts)
+reduced_dtm.test <- apply(reduced_dtm.test, MARGIN = 2, convert_counts)
+```
+
+##### Now, lets see how our model performs
+```{r message=FALSE, warning=FALSE}
+
+sms_classifier = naiveBayes(reduced_dtm.train, MyTrain$Type)
+sms_test.predicted = predict(sms_classifier, reduced_dtm.test)
+CrossTable(sms_test.predicted, 
+           MyTest$Type, 
+           prop.chisq = FALSE, 
+           prop.t = FALSE,
+           dnn = c("predcited", "actual"))
+```
+
+##### The above model predicts ham with 96.3% accuracy. Howver, the accuracy to predict spam was 43.8% which is a very bad news if this was a spam detection solution. 
+
+# Conclusion
+##### This project highlighted the use of Naive Bayes classifier in order to develop a model that will classify if a set of text messages are either spam or not. The data we had was already classified as spam or ham. During this project we were able to use corpus to create docs of each text message, clean it up and get it ready. Using DTM (or TDM depending on what we want to do), we were able to tokenize each message into words/terms. Thus, we were able to visualize the word saturation, perform the prediction and more. 
+
+##### Some key lessons to be learned here are: 1) Laplace estimator does not necessarily correct/enhance the model. 2) The more data we have (in our case, more words to work with), the more accurate our model predicted.
+
+
+# References
+https://rstudio-pubs-static.s3.amazonaws.com/163802_0f005a14bcfb4c4b8ee17ac8a8e6c3e9.html<br>
+https://rpubs.com/mzc/mlwr_nb_sms_spam<br>
+https://towardsdatascience.com/sms-text-classification-a51defc2361c<br>
+
+-------------------------------------

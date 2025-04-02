@@ -1,0 +1,176 @@
+Last login: Thu Feb  7 13:56:11 on ttys000
+ETANAmac:~ msds$ cd Documents/MSDS610/ambari-vagrant-master/centos7.4_8
+ETANAmac:centos7.4_8 msds$ vagrant status
+Current machine states:
+
+c7401                     running (virtualbox)
+c7402                     running (virtualbox)
+
+This environment represents multiple VMs. The VMs are all listed
+above with their current state. For more information about a specific
+VM, run `vagrant status NAME`.
+ETANAmac:centos7.4_8 msds$ vagrant ssh c401
+The machine with the name 'c401' was not found configured for
+this Vagrant environment.
+ETANAmac:centos7.4_8 msds$ vagrant ssh c7401
+Last login: Thu Feb  7 21:10:03 2019 from 192.168.73.101
+[vagrant@c7401 ~]$ clear
+
+
+
+
+
+
+
+[vagrant@c7401 ~]$ exit
+logout
+Connection to 127.0.0.1 closed.
+ETANAmac:centos7.4_8 msds$ clear
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ETANAmac:centos7.4_8 msds$ vagrant status
+Current machine states:
+
+c7401                     running (virtualbox)
+c7402                     running (virtualbox)
+
+This environment represents multiple VMs. The VMs are all listed
+above with their current state. For more information about a specific
+VM, run `vagrant status NAME`.
+ETANAmac:centos7.4_8 msds$ vagrant ssh c7401
+Last login: Thu Feb  7 21:22:37 2019 from 10.0.2.2
+[vagrant@c7401 ~]$ hbase shell
+HBase Shell; enter 'help<RETURN>' for list of supported commands.
+Type "exit<RETURN>" to leave the HBase Shell
+Version 1.1.2.2.6.4.0-91, r2a88e694af7238290a5747f963a4fa0079c55bf9, Thu Jan  4 10:42:39 UTC 2018
+
+hbase(main):001:0> status
+1 active master, 0 backup masters, 1 servers, 0 dead, 2.0000 average load
+
+hbase(main):002:0> version
+1.1.2.2.6.4.0-91, r2a88e694af7238290a5747f963a4fa0079c55bf9, Thu Jan  4 10:42:39 UTC 2018
+
+hbase(main):003:0> create 'wiki','text'
+0 row(s) in 10.4280 seconds
+
+=> Hbase::Table - wiki
+hbase(main):004:0> put 'wiki', 'Home', 'text:', 'Welcome to the wiki!'
+0 row(s) in 0.5040 seconds
+
+hbase(main):005:0> get 'wiki', 'Home', 'text:'
+COLUMN                   CELL                                                                 
+ text:                   timestamp=1549577044430, value=Welcome to the wiki!                  
+1 row(s) in 0.1510 seconds
+
+hbase(main):006:0> put 'wiki','second','text:','second row'
+0 row(s) in 0.0370 seconds
+
+hbase(main):007:0> put 'wiki', 'third', 'text:', 'third row'
+0 row(s) in 0.0310 seconds
+
+hbase(main):008:0> get 'wiki', 'second', 'text:'
+COLUMN                   CELL                                                                 
+ text:                   timestamp=1549577112831, value=second row                            
+1 row(s) in 0.0220 seconds
+
+hbase(main):009:0> get 'wiki', 'fakekey', 'text:'
+COLUMN                   CELL                                                                 
+0 row(s) in 0.0220 seconds
+
+hbase(main):010:0> get 'wiki', 'third', 'text:'
+COLUMN                   CELL                                                                 
+ text:                   timestamp=1549577171765, value=third row                             
+1 row(s) in 0.0630 seconds
+
+hbase(main):011:0> put 'wiki', 'third', 'text:', 'change to 3'
+0 row(s) in 0.3000 seconds
+
+hbase(main):012:0> get 'wiki', 'third', 'text:'
+COLUMN                   CELL                                                                 
+ text:                   timestamp=1549577399962, value=change to 3                           
+1 row(s) in 0.0580 seconds
+
+hbase(main):013:0> create 'students','account','address'
+0 row(s) in 9.5310 seconds
+
+=> Hbase::Table - students
+hbase(main):014:0> put 'students','student1','account:name','Alice'
+0 row(s) in 0.3310 seconds
+
+hbase(main):015:0> put 'students','student1','address:street','123 Ballmer Av'
+0 row(s) in 0.1060 seconds
+
+hbase(main):016:0> put 'students','student1','address:zipcode','12345'
+0 row(s) in 0.0870 seconds
+
+hbase(main):017:0> put 'students','student1','address:state','CA'
+0 row(s) in 0.2600 seconds
+
+hbase(main):018:0> put 'students','student1','account:name','Alice' && put 'students','student1','address:street','123 Ballmer Av'
+SyntaxError: (hbase):18: syntax error, unexpected tSTRING_BEG
+
+put 'students','student1','account:name','Alice' && put 'students','student1','address:street','123 Ballmer Av'
+                                                        ^
+
+hbase(main):019:0> > put 'students','student1','account:name','Alice' && put 'students','student1','address:street','123 Ballmer Av'
+SyntaxError: (hbase):19: syntax error, unexpected tGT
+
+> put 'students','student1','account:name','Alice' && put 'students','student1','address:street','123 Ballmer Av'
+^
+
+hbase(main):020:0> put 'students','student2','account:name','Bob'
+0 row(s) in 0.2580 seconds
+
+hbase(main):021:0> put 'students','student2','address:street','1 Infinite Loop'
+0 row(s) in 0.0550 seconds
+
+hbase(main):022:0> put 'students','student2','address:zipcode','12345'
+0 row(s) in 0.0310 seconds
+
+hbase(main):023:0> get 'students', 'student2'
+COLUMN                   CELL                                                                 
+ account:name            timestamp=1549577879880, value=Bob                                   
+ address:street          timestamp=1549577905258, value=1 Infinite Loop                       
+ address:zipcode         timestamp=1549577920011, value=12345                                 
+3 row(s) in 0.1600 seconds
+
+hbase(main):024:0> get 'students', 'student1'
+COLUMN                   CELL                                                                 
+ account:name            timestamp=1549577605488, value=Alice                                 
+ address:state           timestamp=1549577668304, value=CA                                    
+ address:street          timestamp=1549577630405, value=123 Ballmer Av                        
+ address:zipcode         timestamp=1549577652148, value=12345                                 
+4 row(s) in 0.3940 seconds
+
+hbase(main):025:0> disable 'wiki'
+0 row(s) in 9.8600 seconds
+
+hbase(main):026:0> drop 'wiki'
+0 row(s) in 2.6360 seconds
+
+hbase(main):027:0> exit
+[vagrant@c7401 ~]$ exit
+logout
+Connection to 127.0.0.1 closed.
+ETANAmac:centos7.4_8 msds$ vagrant suspend
+==> c7401: Saving VM state and suspending execution...
+==> c7402: Saving VM state and suspending execution...
+ETANAmac:centos7.4_8 msds$ 

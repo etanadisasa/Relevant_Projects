@@ -1,0 +1,112 @@
+Last login: Mon Sep 10 09:05:37 on console
+users-MacBook-Pro-2163:~ etanan$ cd Documents
+users-MacBook-Pro-2163:Documents etanan$ cd PythonProjects
+users-MacBook-Pro-2163:PythonProjects etanan$ python ./twitterstream.py
+Traceback (most recent call last):
+  File "./twitterstream.py", line 2, in <module>
+    from requests_oauthlib import OAuth1
+ModuleNotFoundError: No module named 'requests_oauthlib'
+users-MacBook-Pro-2163:PythonProjects etanan$ conda install -c conda-forge jsonlines
+Solving environment: done
+
+# All requested packages already installed.
+
+users-MacBook-Pro-2163:PythonProjects etanan$ conda install -c anaconda requests
+Solving environment: done
+
+## Package Plan ##
+
+  environment location: /Users/etanan/anaconda3
+
+  added / updated specs:
+    - requests
+
+
+The following packages will be downloaded:
+
+    package                    |            build
+    ---------------------------|-----------------
+    openssl-1.0.2p             |       h1de35cc_0         3.4 MB  anaconda
+    certifi-2018.8.24          |           py36_1         139 KB  anaconda
+    requests-2.19.1            |           py36_0          96 KB  anaconda
+    ca-certificates-2018.03.07 |                0         124 KB  anaconda
+    conda-4.5.11               |           py36_0         1.0 MB  anaconda
+    ------------------------------------------------------------
+                                           Total:         4.8 MB
+
+The following packages will be UPDATED:
+
+    certifi:         2018.8.24-py36_1      conda-forge --> 2018.8.24-py36_1  anaconda
+    conda:           4.5.11-py36_0         conda-forge --> 4.5.11-py36_0     anaconda
+    openssl:         1.0.2p-h470a237_0     conda-forge --> 1.0.2p-h1de35cc_0 anaconda
+    requests:        2.18.4-py36h4516966_1             --> 2.19.1-py36_0     anaconda
+
+The following packages will be DOWNGRADED:
+
+    ca-certificates: 2018.8.24-ha4d7672_0  conda-forge --> 2018.03.07-0      anaconda
+
+Proceed ([y]/n)? y
+
+
+Downloading and Extracting Packages
+openssl-1.0.2p       | 3.4 MB    | ############################################################################################################################### | 100%
+certifi-2018.8.24    | 139 KB    | ############################################################################################################################### | 100%
+requests-2.19.1      | 96 KB     | ############################################################################################################################### | 100%
+ca-certificates-2018 | 124 KB    | ############################################################################################################################### | 100%
+conda-4.5.11         | 1.0 MB    | ############################################################################################################################### | 100%
+Preparing transaction: done
+Verifying transaction: done
+Executing transaction: done
+users-MacBook-Pro-2163:PythonProjects etanan$ conda install -c conda-forge requests-oauthlib
+Solving environment: done
+
+## Package Plan ##
+
+  environment location: /Users/etanan/anaconda3
+
+  added / updated specs:
+    - requests-oauthlib
+
+
+The following packages will be downloaded:
+
+    package                    |            build
+    ---------------------------|-----------------
+    pyjwt-1.6.4                |             py_0          16 KB  conda-forge
+    requests-oauthlib-1.0.0    |             py_1          17 KB  conda-forge
+    conda-4.5.11               |           py36_0         625 KB  conda-forge
+    blinker-1.4                |             py_1          13 KB  conda-forge
+    oauthlib-2.1.0             |             py_0          69 KB  conda-forge
+    certifi-2018.8.24          |           py36_1         139 KB  conda-forge
+    ------------------------------------------------------------
+                                           Total:         879 KB
+
+The following NEW packages will be INSTALLED:
+
+    blinker:           1.4-py_1          conda-forge
+    oauthlib:          2.1.0-py_0        conda-forge
+    pyjwt:             1.6.4-py_0        conda-forge
+    requests-oauthlib: 1.0.0-py_1        conda-forge
+
+The following packages will be UPDATED:
+
+    ca-certificates:   2018.03.07-0      anaconda    --> 2018.8.24-ha4d7672_0 conda-forge
+    certifi:           2018.8.24-py36_1  anaconda    --> 2018.8.24-py36_1     conda-forge
+    conda:             4.5.11-py36_0     anaconda    --> 4.5.11-py36_0        conda-forge
+    openssl:           1.0.2p-h1de35cc_0 anaconda    --> 1.0.2p-h470a237_0    conda-forge
+
+Proceed ([y]/n)? y
+
+
+Downloading and Extracting Packages
+pyjwt-1.6.4          | 16 KB     | ############################################################################################################################### | 100%
+requests-oauthlib-1. | 17 KB     | ############################################################################################################################### | 100%
+conda-4.5.11         | 625 KB    | ############################################################################################################################### | 100%
+blinker-1.4          | 13 KB     | ############################################################################################################################### | 100%
+oauthlib-2.1.0       | 69 KB     | ############################################################################################################################### | 100%
+certifi-2018.8.24    | 139 KB    | ############################################################################################################################### | 100%
+Preparing transaction: done
+Verifying transaction: done
+Executing transaction: done
+users-MacBook-Pro-2163:PythonProjects etanan$ python ./twitterstream.py
+200

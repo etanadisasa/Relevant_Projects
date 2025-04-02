@@ -1,0 +1,44 @@
+users-MacBook-Pro-2163:PythonProjects etanan$ python tweetsentiment3V2.py AFINN-111.txt output.json
+<class 'dict'>
+-5 sentiments  90
+-4 sentiments  274
+-3 sentiments  1214
+-2 sentiments  1491
+-1 sentiments  1098
+ 0 sentiments  0
+ 1 sentiments  1731
+ 2 sentiments  2014
+ 3 sentiments  541
+ 4 sentiments  309
+ 5 sentiments  3
+users-MacBook-Pro-2163:PythonProjects etanan$ python filtertwitter.py
+200
+^Cusers-MacBook-Pro-2163:PythonProjects etanan$ python tweetsentiment3V2.py AFINN-111.txt filter.json
+<class 'dict'>
+-5 sentiments  0
+-4 sentiments  4
+-3 sentiments  20
+-2 sentiments  35
+-1 sentiments  22
+ 0 sentiments  0
+ 1 sentiments  36
+ 2 sentiments  75
+ 3 sentiments  17
+ 4 sentiments  1
+ 5 sentiments  0
+users-MacBook-Pro-2163:PythonProjects etanan$ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,91 @@
+---
+title: "HCA Clustering Using R"
+author: "Etana Disasa"
+date: "10/27/2019"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+library(factoextra)
+library(gridExtra)
+library(cluster)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(dendextend)
+```
+# Introduction
+##### In this assignment, we will use a small Wholesale Customer dataset to perform Hierarchical Clustering Approach (HCA). Furthermore, we will try to cut the tree to see which clustering best performs the classification process. 
+
+# Methods
+## Acquiring Data
+##### The data we are using is a Wholesale Customer information. It contains several data points. It has 440 observations and 8 variables. 
+```{r}
+MyData <- read.csv(file = "Wholesale customers data.csv", header = TRUE)
+str(MyData)
+MyData <- na.omit(MyData) # Making sure there is not a data row with NA (no) data in it. 
+MyData <- scale(MyData) # Scaling the dataset is very important as we are dealing with k means to cluster
+head(MyData, n=10)
+```
+
+## HCA Clustering
+##### The hierarchical clustering algorithm I am using `hclust` uses the `complete` linkage method which is the default linkage method. I will also use `average` and `single` linkage methods to compare the results later.  
+```{r}
+hcCluster <- hclust(dist(MyData, method = "euclidean"), method="complete")
+hcCluster1 <- hclust(dist(MyData, method = "euclidean"), method="average")
+hcCluster2 <- hclust(dist(MyData, method = "euclidean"), method="single")
+hcCluster3 <- hclust(dist(MyData, method = "euclidean"), method = "ward.D")
+```
+
+## Identifying Optimal Clusters Using the Silhouette Plot
+##### This plot computes the average silhouette of observations for different clusters. The optimal number of clusters will be the one that maximizes the average silhouette value and the result below shows 5 as the optimal number of clusters. This plot and k value however, only works for the default complete linkage clusters. 
+```{r}
+fviz_nbclust(MyData, kmeans, method = "silhouette", k.max = 24) + theme_minimal() + ggtitle("The Silhouette Plot")
+```
+
+## Plotting Dendrogram of Various Linkages
+```{r}
+par(mfrow=c(2,2))
+plot(hcCluster, main = "Complete Linkage")
+plot(hcCluster1, main = "Average Linkage")
+plot(hcCluster2, main = "Single Linkage")
+plot(hcCluster3, main = "Ward Linkage")
+```
+
+### Cutting Dendrogram
+##### Given I have identified an optimal cluster number 5, I will use that to cut the tree. I am using `hcCluster3` for this portion and on. I have used the ward cluster because it appears  a balanced tree compared to the others. 
+```{r}
+hcCutK <- cutree(hcCluster3, k = 5)
+table(hcCutK)
+plot(hcCluster3)
+rect.hclust(hcCluster3 , k = 5, border = 2:7)
+abline(h = 5, col = 'red') 
+```
+
+##### The above plot shows 5 clusters diffrentiated in five different colors. 
+
+```{r}
+hcCut <- cutree(hcCluster3, 7)
+table(hcCut)
+plot(hcCluster3)
+rect.hclust(hcCluster3 , k = 7, border = 2:9)
+abline(h = 7, col = 'red') 
+```
+
+##### Here, the above k value of 7 cuts the three in 7 seven clusters. Below is another cool display of the dendrogram with the spectrum of colors.  
+```{r}
+dend_obj <- as.dendrogram(hcCluster3)
+col_dend <- color_branches(dend_obj, h = 5)
+plot(col_dend, main = "Colorful Dendrogram")
+```
+
+# Conclusion
+##### Cutting the tree on the dendrogram is an observational process. The various linkages determine the kind of tree we will get. Once again, making sure the data has no NA values, that it is numeric, and that is scaled are very important in performing clustering. 
+
+# References
+http://www.sthda.com/english/wiki/print.php?id=237<br>
+http://www.sthda.com/english/wiki/print.php?id=237<br>
+https://afit-r.github.io/hc_clustering<br>
+https://rpubs.com/AIventurer/unsupervised_learning_ch2<br>

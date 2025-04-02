@@ -1,0 +1,95 @@
+---
+title: "K Means Clustering Using R"
+author: "Etana Disasa"
+date: "10/24/2019"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+```{r echo = FALSE, warning=FALSE, message=FALSE}
+library(stats)
+library(factoextra)
+library(gridExtra)
+library(cluster)
+```
+# Introduction
+##### This week, we are using K-means to cluster a dataset. We will see how we can find the optimal k value in order to cluster our dataset. We will also do visualization of the clusters with visible centroids. 
+
+# Methods
+## Acquiring Data
+##### The data we are using is a Wholesale Customer information. It contains several data points. It has 440 observations and 8 variables. 
+```{r}
+MyData <- read.csv(file = "Wholesale customers data.csv", header = TRUE)
+str(MyData)
+MyData <- na.omit(MyData) # Making sure there is not a data row with NA (no) data in it. 
+MyData <- scale(MyData) # Scaling the dataset is very important as we are dealing with k means to cluster
+head(MyData, n=10)
+```
+
+## Finding the Optimum Number of Clusters
+### The "Elbow" Method
+##### The first method I am using is the elbow method. This method uses the within groups sum of squares of each cluster and see where the graph elbos and turns. 
+
+```{r}
+wss <- (nrow(MyData)-1)*sum(apply(MyData,2,var))
+for (i in 2:15) wss[i] <- sum(kmeans(MyData, 
+   centers=i)$withinss)
+plot(1:15, wss, type="b", xlab="Number of Clusters",
+  ylab="Within groups sum of squares")
+```
+
+##### This graph is not necessarily very helpful when it comes to determining the optimal cluster numbers. It appears, that 3, 5 or 6 may appear the elbow points where the graph turns. This method may be easy, however, it will be on the observer to make a determination. In other words, it is not exact, but very helpful.
+
+### The Gap Statistics
+##### This compares the "total within intra-cluster variation for different values of K with their expected values under null reference distribution of data. Therefore, the otpimal cluster will be the value that maximize the gap statistics."<sup>1</sup> This appraoch is more accurate compared to the Elbow Method. 
+```{r warning = FALSE, message = FALSE}
+gap_stat <- clusGap(MyData, FUN = kmeans, nstart = 30, K.max = 24, B = 50)
+fviz_gap_stat(gap_stat) + theme_minimal() + ggtitle("fviz_gap_stat: Gap Statistic")
+```
+
+##### The Gap method had generated an optimal K value of `K = 2` which is different than the value our elbow method had generated. 
+
+### The Silhouette Plot
+##### This plot computes the average silhouette of observations for different K values. The optimal K value will be the one that maximizes the average silhouette value. 
+```{r}
+fviz_nbclust(MyData, kmeans, method = "silhouette", k.max = 24) + theme_minimal() + ggtitle("The Silhouette Plot")
+```
+
+##### In the above case, the optimal K value is `K = 5`. So, we have a few contenders here from these three different methods of determining the optimal K value. 
+
+## Clustering the Given Dataset
+##### Now, we will cluster the dataset in the several optimal K values we have acquired. 
+```{r}
+
+fit1 <- kmeans(MyData, centers = 2) # 2 cluster solution
+fit2 <- kmeans(MyData, centers = 3) # 3 cluster solution
+fit3 <- kmeans(MyData, centers = 5) # 5 cluster solution
+fit4 <- kmeans(MyData, centers = 6) # 6 cluster solution
+```
+
+## Plotting Clusters
+##### I will use the 4 different kinds of clustering with 4 different optimal K values in order to generate 4 plots to compare from. The <b> centroids </b> are designated a bit bigger and bolder per their cluster designated bullet/shape.
+```{r}
+Cluster1 <- fviz_cluster(fit1, geom = "point", data = MyData) + ggtitle("A 2 Cluster Solution")
+Cluster2 <- fviz_cluster(fit2, geom = "point", data = MyData) + ggtitle("A 3 Cluster Solution")
+Cluster3 <- fviz_cluster(fit3, geom = "point", data = MyData) + ggtitle("A 5 Cluster Solution")
+Cluster4 <- fviz_cluster(fit3, geom = "point", data = MyData) + ggtitle("A 6 Cluster Solution")
+
+grid.arrange(Cluster1, Cluster2, Cluster3, Cluster4, nrow = 2)
+```
+
+## Difficult Clusters
+##### The 5 and 6 centered clusters are difficult to detect their points or they contain the centroid and a few members in the cluster. However, the 2 and 3 cluster solution are much better to visualize and find their centroids. If I have to take one optimal k value, I will consider the 3 cluster solution as it is much better distinctively clusters. 
+```{r}
+Cluster2 <- fviz_cluster(fit2, geom = "point", data = MyData) + ggtitle("A 3 Cluster Solution")
+```
+
+# Conclusion
+##### During this assingment, we have used a k-means clustering method to classify data. As we are dealing with distances, it is important to make sure that the data is numberic. Scaling the data also helps to evaluate k distances and sum of squares. Furthermore, making sure we get rid of NA or NULL values from the dataset is important as we are dealing with distances. It is also important to find the optimal k values. Depending on the K values, we may have completely different classification of data observations. Therefore, finding a working optimal k value is very key. 
+
+# References
+1. https://towardsdatascience.com/10-tips-for-choosing-the-optimal-number-of-clusters-277e93d72d92<br>
+https://uc-r.github.io/kmeans_clustering<br>
+https://www.r-bloggers.com/10-tips-for-choosing-the-optimal-number-of-clusters/<br> 

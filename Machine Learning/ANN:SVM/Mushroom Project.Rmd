@@ -1,0 +1,179 @@
+---
+title: "ANN/SVM Using R"
+author: "Etana Disasa"
+date: "10/27/2019"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+# Introduction
+##### This week, we will be using Neural Network and SVM classifiers in order to predict whether a mushroom is edible or not. By changing the different arguments in these function os classifier, we will attept to find out how to optimize the most accurate prediction. We will also spend sometime preping the dataset to be suitable for each predictor. In conclusion, we will determine, given the dataset and the circumstances, which predictor was more accurate. 
+
+# Method
+```{r echo=FALSE, warning = FALSE, message = FALSE}
+library(ggplot2)
+library(e1071)
+library(rpart)
+library(caret)
+library(data.table)
+library(neuralnet)
+```
+
+## Importing Data
+##### Below, we will import the data and see what the structure is. We will also assess and see if there are any variables that would not affect our modeling. 
+```{r}
+Mushroom <- read.csv(file = "mushrooms.csv", header = TRUE)
+str(Mushroom)
+```
+
+
+## Preparing Data
+##### As you may see above, the dataset is made of `r ncol(Mushroom)` variables and `r nrow(Mushroom)` total. All the variables are factors. However, in order to perform NN and SVM functions, we would need to convert them to numeric. Furthermore, the `veil.type` varibale only has one level of observation which does not affect the functions. Therefore: 1) We will remove the `veil.type` variable as it only registers a single value. 2) We will change the factor variables into numerics so our functions work. 3) We would also need to normalize the dataset in order to perform.
+
+### Preparing Data for the NN and SVM Models
+##### I decided to change the 'class' variable name--which can be confusing during compiling the code--to 'edible'.  
+```{r}
+setnames(Mushroom, old="class", new="edible") # 
+Mushroom <- Mushroom[, -16] #Removing the "veil.type" variable.
+head(Mushroom, n=10)
+```
+
+### Data Conversion and Normalization
+```{r}
+# Function to convert factors to numeric
+ConvertToNumer <- function (x){
+  x <- as.numeric(x)
+  return(x)
+} 
+
+# Function to normalize the dataset
+Normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# Down here, we see our dataset is getting ready for net step
+MushroomNN <- as.data.frame(sapply(Mushroom, ConvertToNumer)) #Converting Factor Variables into Numeric
+MushroomNN <- as.data.frame(sapply(MushroomNN, Normalize)) #Normalize
+```
+
+
+##### The table above shows that our data now has `nrow(MyMushroom)` and it looks perfect to be split into training and testing datasets. We will use 8:2 ratio to split the data. 
+```{r}
+MySample <- sample(8124, round(8124*0.8, digits = 0))
+MyTrain <- MushroomNN[MySample, ]
+MyTest <- MushroomNN[-MySample, ]
+nrow(MyTrain)
+nrow(MyTest)
+```
+
+## Neural Network Classifier
+##### Now we will apply `neuralnet` function to see different types of models. But first, lets see how the prediction shows up. 
+
+```{r}
+netModel1 <- neuralnet(edible ~., MyTrain, hidden = 2)
+predict1 <- predict(netModel1, MyTest)
+head(predict1, n=5)
+```
+
+##### As you can see above, our predict function is returning numbers between 0 and 1. Therefore, rounding them will be important. 0 stands for the edible mushrooms and 1 stands for poisonous
+```{r}
+predict1 <- round(predict1, digits = 0)
+head(predict1, n=5)
+```
+
+##### Now, the predict1 result appears meaningful. Now, lets compare the prediction against the `MyTest$edible` values. 
+```{r}
+net.table1 <- table(MyTest$edible, predict1)
+confusionMatrix(net.table1)
+net.table1
+```
+
+##### Our NN model shows an accuracy of `r ((net.table1[1,1] + net.table1[2,2])/nrow(MyTest)*100)`% which is pretty significant. In order to better the model, lets change some of the `neuralnet` attributes. 
+
+```{r}
+netModel2 <- neuralnet(edible ~., MyTrain, hidden = 2, learningrate = 0.01)
+predict2 <- round(predict(netModel2, MyTest), digits = 0)
+net.table2 <- table(MyTest$edible, predict2)
+confusionMatrix(net.table2)
+```
+
+##### Here the accuracy of our model `r ((net.table2[1,1] + net.table2[2,2])/nrow(MyTest)*100)`%. Now, lets see how the accuracy changes if `learningrate` to 1. 
+
+```{r}
+netModel3 <- neuralnet(edible ~., MyTrain, hidden = 2, learningrate = 1)
+predict3 <- round(predict(netModel3, MyTest), digits = 0)
+net.table3 <- table(MyTest$edible, predict3)
+confusionMatrix(net.table3)
+```
+
+##### Now the accuracy is `r ((net.table3[1,1] + net.table3[2,2])/nrow(MyTest)*100)`% which dropped significantly yet still better than the original prediction. Keeping the `learningrate = 0.01`, let us change hidden node to `hidden = 3`.  
+```{r}
+netModel4 <- neuralnet(edible ~., MyTrain, hidden = 3, learningrate = 0.01)
+predict4 <- round(predict(netModel4, MyTest), digits = 0)
+net.table4 <- table(MyTest$edible, predict4)
+confusionMatrix(net.table4)
+```
+
+##### Due to these changes, the accuracy rate is now `r ((net.table4[1,1] + net.table4[2,2])/nrow(MyTest)*100)`%.
+
+################################################################################################################
+
+## SVM Predictor
+##### For this section, I will use the original dataset and keep the 'edible' variable as factor. 
+```{r}
+MyMushroom <- Mushroom
+MyMushroom[1:21] <- as.data.frame(sapply(Mushroom[1:21], ConvertToNumer)) #Converting Factor Variables into Numeric
+MyMushroom[1:21] <- as.data.frame(sapply(MyMushroom[1:21], Normalize)) #Normalize
+
+MyTrain <- MyMushroom[MySample, ]
+MyTest <- MyMushroom[-MySample, ]
+nrow(MyTrain)
+nrow(MyTest)
+```
+
+### SVM with Kernel = Linear
+```{r}
+svmModel1 <- svm(edible ~., data = MyTrain, kernel = "linear")
+predict5 <- predict(svmModel1, MyTest)
+svm.table1 <- table(MyTest$edible, predict5)
+svm.table1
+confusionMatrix(svm.table1)
+```
+
+##### The above model predicts with a 98.58% accuracy. 
+
+### SVM with Kernel = Radial
+```{r}
+svmModel2 <- svm(edible ~., data = MyTrain, kernel = "radial")
+predict6 <- predict(svmModel2, MyTest)
+svm.table2 <- table(MyTest$edible, predict6)
+svm.table2
+confusionMatrix(svm.table2)
+```
+##### The radial kernel SVM predictis with a 100% accuracy. 
+
+### SVM with Kernel = Polynomial
+```{r}
+svmModel3 <- svm(edible ~., data = MyTrain, kernel = "polynomial")
+predict7 <- predict(svmModel3, MyTest)
+svm.table3 <- table(MyTest$edible, predict7)
+svm.table3
+confusionMatrix(svm.table3)
+```
+##### Similarly, the Polynomial kernel SVM predicts with a 100% accuracy. 
+
+
+# Conclsuion
+##### Some of the lessons we have gotten from this project include
+##### 1) Changing the variable type depending of the tool we use is important. 
+##### 2) LearningRate in NN models determins the accuracy. Finding the best/optimal learningrate is important. 
+##### 3) While converting data variables into numeric, the classification process may be altered. Therefore, rounding off result values is importnat. 
+##### 4) SVM, radial and polynomial kernel appears to be providing more accuracy. 
+##### Therefore, for this assignment and for the dataset we have aqcuired, <b>SVM with either radial or polynomial kernel values is <i>the most accurate</i> predictor</b>
+
+# References
+https://www.r-bloggers.com/neural-networks-exercises-part-2/</br>
+http://rstudio-pubs-static.s3.amazonaws.com/318415_ca75160387444e7bba3c52dcec821453.html</br>
+https://www.rdocumentation.org/packages/neuralnet/versions/1.44.2/topics/neuralnet</br>

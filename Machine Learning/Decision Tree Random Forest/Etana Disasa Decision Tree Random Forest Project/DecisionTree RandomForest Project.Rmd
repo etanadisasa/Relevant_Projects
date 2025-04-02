@@ -1,0 +1,129 @@
+---
+title: "DecisionTree Random/Forest Project"
+author: "Etana Disasa"
+date: "10/12/2019"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+```{r echo=FALSE, warning = FALSE, message = FALSE}
+library(rpart)
+library(data.table)
+library(rattle)
+library(rpart.plot)
+library(caret)
+library(partykit)
+library(randomForest)
+```
+# Introduction
+
+# Method
+```{r}
+MyBank <- read.delim(file = "german.data", header = FALSE , sep = " ")
+str(MyBank)
+```
+
+###### This dataframe has 21 variables. The description made available on the website however, only accounts for 20 variables. I will not use the extra variable. I have also changed the column names to correspond each variable listed in the dataframe description. 
+
+```{r}
+setnames(MyBank, old = c("V1","V2","V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20", "V21"), new = c("CheckingAccount","Duration", "CreditHistory", "Purpose", "CreditAmount", "AccountBonds", "Employment", "InstallmentRate", "StatusSex", "Guarantors", "ResidenceSince", "PropertyType", "Age", "InstallmentPlans", "HousingType", "ExistingCredits", "JobType", "NoOfPeopleLiable","Telephone", "ForeignWorker", "Risk"))
+MyBank$Risk[MyBank$Risk == "1"] <- "Bad"
+MyBank$Risk[MyBank$Risk == "2"] <- "Good"
+MyBank$Risk <- as.factor(MyBank$Risk)
+str(MyBank)
+```
+
+### Splitting Data into Train and Test Sets
+##### We will use the `rpart()` function to randomly sample 8:2 for training and testing sets. We will use the train and test datasets for all the three models we will be using. 
+```{r}
+MySample <- sample(1000, round(1000*0.8, digits = 0))
+str(MySample)
+MyTrain <- MyBank[MySample, ]
+MyTest <- MyBank[-MySample, ]
+nrow(MyTrain)
+nrow(MyTest)
+```
+
+##### Now we have `MyTrain` and `MyTest` datasets, with `r nrow(MyTrain)` and r nrow(MyTest)` observations consecutively according to 8:2 ratio we would like to attain. 
+
+## Decision Tree
+##### Below, I have used three different kinds of visualization to help us understand how our decision tree is working. 
+
+```{r}
+MyDecision <- rpart(Risk~., MyTrain, method = "class")
+rpart.plot(MyDecision, type = 3, fallen.leaves = TRUE)
+plotcp(MyDecision)
+```
+
+### Prediction
+```{r}
+pred <- predict(MyDecision, MyTest, type = "class")
+table(MyTest$Risk, pred)
+```
+
+##### Using our model, we now no prediction in order to classify the quality of wine. 
+### Confusion Matrix
+```{r}
+confusionMatrix(table(pred, MyTest$Risk))
+```
+
+##### Our decision tree predicts with 77% accuracy rate. Now let us see how pruning our tree changes the prediction.
+
+## Prunned Decision Tree
+##### In order to prun this tree, we can either provide the maxdepth, minsplit and minbucket variables. We can also decude what CP (Complex Paramter) we would like to use. If the cost of adding a variable is higher then the value of CP then tree growth will be stopped. From below, we can see which CP to consider. 
+```{r}
+printcp(MyDecision)
+```
+
+##### Given the above Tree, if we cut the tree at CP = 0.10163 which will cut the tree at a 15 split branching, we may then make a prediction and see if it changes the accuracy rate. 
+```{r}
+MyDecision <- rpart(Risk~., MyTrain, method = "class", control = rpart.control(cp = 0.010163))
+rpart.plot(MyDecision, type = 3, fallen.leaves = TRUE)
+```
+
+### Prediction Post Pruning
+```{r}
+pred <- predict(MyDecision, MyTest, type = "class")
+table(MyTest$Risk, pred)
+```
+
+##### It appears that the prediction had bettered a tiny bit. Lets see the change in the confusion matrix. 
+### Confusion Matrix
+```{r}
+confusionMatrix(table(pred, MyTest$Risk))
+```
+
+##### Certainly enough, the pruned Decesion tree model has done a classification of 77.5% which has imporived the model by 0.5%. Furthermore, the sensitivity of the model had increased from approximately 88% to 90%. The Detection Rate had also increased from a 64.5% to a 65.5%. However, the Specificity had debreased from 46.3% to 44.4%. 
+
+## Random Forest
+
+##### Now using the same train and test data, lets use Random Forest classification. 
+```{r}
+MyDecision <- randomForest(Risk~., data = MyTrain, importance = TRUE)
+```
+
+### Prediction
+
+```{r}
+pred <- predict(MyDecision, MyTest, type = "class")
+table(MyTest$Risk, pred)
+```
+
+### Confusion Matrix
+```{r}
+confusionMatrix(table(pred, MyTest$Risk))
+```
+
+##### Here, our Random Forest has the highest accuracy of 78.5% with approximately 95% Sensitivity and a decreased Specificity of approximately 35.2%. This model predicts much better than the pruned and pre-pruned decision tree models. 
+
+
+# Conclusion
+##### For this assignment, we had utilized an encrypted bank data with 21 variables, including an aditional Risk variable to determine for the bank which individuals are "good" to approve or "bad" to approve. First, the Random Forest model we used predicted with the accuracy of 77%. Later, when we pruned the tree, the accuracy incrased by .5% to a 77.5%. When we use a Random Forest, the accuracy increased to 78.5% all together. We conclude that, for this dataset, it appears that Random Forest provides most accurate data classification. 
+
+
+# References
+https://archive.ics.uci.edu/ml/datasets/Statlog+(German+Credit+Data)<br>
+https://towardsdatascience.com/decision-trees-pruning-4241cc266fef<br>
+https://towardsdatascience.com/decision-trees-pruning-4241cc266fef<br>

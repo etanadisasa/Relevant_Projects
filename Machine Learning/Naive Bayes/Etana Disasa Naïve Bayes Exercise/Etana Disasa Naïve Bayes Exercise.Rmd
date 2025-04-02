@@ -1,0 +1,136 @@
+---
+title: "Naïve Bayes/Bayesian Network Exercise"
+author: "Etana Disasa"
+date: "9/25/2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(class)
+library(reshape)
+library(Rfast)
+library(caret)
+library(dplyr)
+```
+
+# Introduction
+
+#### This exercise has a few questions of solving probabily using Naïve Bayes/Baysian. The Naïve Bayes classifier a probabilty model that is used to do classification based on the Bayes' Theorem. Below are the problems for this assignment. 
+
+# Problems
+
+### PROBLEM 1
+
+#### In a study of pleas and prison sentences, it is reported that 42% of the subjects were sent to prison. Among those set to prison, 38% plead guilty. Among those not sent to prison, 50% plead guilty.
+
+##### Let P = Sent to prison; ¬P = Not sent to prison; and G = Pleaded guilty;
+<b>Given: <br>
+<i>P(P) = 0.42 <br>
+P(P⋂G) = P(P) * 0.38 = 0.42 * 0.38 = `r 0.42*0.38` <br>
+P(¬P⋂G) = P(¬P) * 0.50 = 0.58 * 0.50 = `r 0.58*0.5`</i></b> <br>
+
+#### 1. If a subject is randomly selected, what is the probability of getting a person who was not sent to prison. <br>
+<b><i>P(¬P) = 1 - P(P) = 1 - 0.42 = 0.58</i></b>
+
+#### 2. If a subject is randomly selected, and it is known that the subject entered a guilty plea, what is the probability that this subject was not sent to prison. <br>
+<b>P(¬P|G) = P(¬P⋂G)/P(G) <br>
+First, lets caclulate P(G) <br>
+<i>P(G) = P(P⋂G) + P(¬P⋂G) <br>
+P(G) = `r 0.42*0.38` + `r 0.58*0.5` = `r (0.42*0.38) + (0.58*0.5)` <br>
+P(G) = `r (0.42 *0.38)+(0.58*0.5)` </i></b><br><br>
+Now, lets calculate P(¬P|G)<br>
+<i><b> P(¬P|G) = P(¬P⋂G)/P(G)<br>
+P(¬P|G) = `r 0.58*0.5`/`r (0.42*0.38) + (0.58*0.5)` = `r (0.58*0.5)/ ((0.42*0.38) + (0.58*0.5))`</i></b>
+
+#### 3. If a subject is randomly selected, what is the probability of getting someone who was sent to prison.
+<b><i>P(P) = 0.42</i></b>
+
+#### 4. If a subject is randomly selected, and it is known that the subject entered a guilty plea, what is the probability that this person was sent to prison.
+<b><i>(P|G) = P(P⋂G)/P(G)<br>
+(P|G) = `r 0.42*0.38`/`r (0.42*0.38)+(0.58*0.5)`<br>
+(P|G) = `r (0.42*0.38)/((0.4*0.38)+(0.58*0.5))`</i></b>
+
+### PROBLEM 2
+### Aquiring Data from the given table
+```{r}
+CustomerID <- c(1:20)
+Gender <- c(rep("M",6), rep("F",4), rep("M",4), rep("F",6))
+CarType <- c("Family",rep("Sports",8), "Luxury",rep("Family",3), rep("Luxury",7))
+ShirtSize <- c("Small",rep("Medium",2), "Large",rep("Extra Large",2), rep("Small",2),"Medium",rep("Large",2),"Extra Large","Medium","Extra Large",rep("Small",2),rep("Medium",3),"Large")
+Class <- c(rep("C0",10),rep("C1",10))
+
+MyTable <- as.data.frame(cbind(CustomerID, Gender, CarType, ShirtSize, Class))
+MyTable
+```
+
+
+### PROBLEM 3
+### <i>A) WHAT IS THE VALUE EACH FOLLOWING PRBABILITY</i>
+### Question 1: P(Gender = M | Class = C0)
+
+#### P(M|0) = P(M⋂0)/P(0)
+P(M⋂0) = <i>`nrow(filter(MyTable, Gender=="M" & Class=="C0")) / nrow(MyTable)` = `r nrow(filter(MyTable, Gender=="M" & Class=="C0")) / nrow(MyTable)`</i><br>
+P(0) = <i>`nrow(filter(MyTable, Class=="C0")) / nrow(MyTable)` = `r nrow(filter(MyTable, Class=="C0")) / nrow(MyTable)`</i>
+
+#### P(M|0) = `r nrow(filter(MyTable, Gender=="M" & Class=="C0")) / nrow(MyTable) / (nrow(filter(MyTable, Class=="C0")) / nrow(MyTable))`
+
+
+### Question 2: P(Gender = F | Class = C1)
+
+#### P(F|1) = P(F⋂1)/P(1)
+P(F⋂0) = <i>`nrow(filter(MyTable, Gender=="F" & Class=="C1")) / nrow(MyTable)` = `r nrow(filter(MyTable, Gender=="F" & Class=="C1")) / nrow(MyTable)`</i><br>
+P(1) = <i>`nrow(filter(MyTable, Class=="C1")) / nrow(MyTable)` = `r nrow(filter(MyTable, Class=="C1")) / nrow(MyTable)`</i>
+
+#### P(F|1) = `r nrow(filter(MyTable, Gender=="F" & Class=="C1")) / nrow(MyTable) / (nrow(filter(MyTable, Class=="C1")) / nrow(MyTable))`
+
+
+### Question 3: P(Car Type = Family | Class = C0) 
+
+#### P(F|0) = P(F⋂0)/P(0)
+P(F⋂C) = <i>`nrow(filter(MyTable, CarType=="Family" & Class=="C0")) / nrow(MyTable)` = `r nrow(filter(MyTable, CarType=="Family" & Class=="C0")) /nrow(MyTable)`</i> <br>
+P(0)   = <i>`nrow(filter(MyTable, Class=="C0")) / nrow(MyTable)`= `r nrow(filter(MyTable, Class=="C0")) / nrow(MyTable)`</i>
+
+#### P(M|0) = `r nrow(filter(MyTable, CarType=="Family" & Class=="C0")) / nrow(MyTable) / (nrow(filter(MyTable, Class=="C0")) / nrow(MyTable))`
+
+
+### Question 4: P(Car Type = Family | Class = C1)
+
+#### P(C|1) = P(C⋂1)/P(1)
+P(C⋂1) = <i>`nrow(filter(MyTable, CarType=="Family" & Class=="C1")) / nrow(MyTable)` = `r nrow(filter(MyTable, CarType=="Family" & Class=="C1")) /nrow(MyTable)`</i> <br>
+P(1)   = <i>`nrow(filter(MyTable, Class=="C1")) / nrow(MyTable)`= `r nrow(filter(MyTable, Class=="C1")) / nrow(MyTable)`</i>
+
+#### P(C|1) = `r nrow(filter(MyTable, CarType=="Family" & Class=="C1")) / nrow(MyTable) / (nrow(filter(MyTable, Class=="C1")) / nrow(MyTable))`
+
+
+### Question 5: P(Shirt Size = Medium | Class = C0)
+
+#### P(M|0) = P(M⋂0)/P(0)
+P(M⋂C) = <i>`nrow(filter(MyTable, ShirtSize=="Medium" & Class=="C0")) / nrow(MyTable)` = `r nrow(filter(MyTable, ShirtSize=="Medium" & Class=="C0")) /nrow(MyTable)`</i> <br>
+P(0)   = <i>`nrow(filter(MyTable, Class=="C0")) / nrow(MyTable)`= `r nrow(filter(MyTable, Class=="C0")) / nrow(MyTable)`</i>
+
+#### P(M|0) = `r nrow(filter(MyTable, ShirtSize=="Medium" & Class=="C0")) / nrow(MyTable) / (nrow(filter(MyTable, Class=="C0")) / nrow(MyTable))`
+
+
+### Question 6: P(Shirt Size = Medium | Class = C1)
+
+#### P(S|1) = P(S⋂1)/P(1)
+P(S⋂1) = <i>`nrow(filter(MyTable, ShirtSize=="Medium" & Class=="C1")) / nrow(MyTable)` = `r nrow(filter(MyTable, ShirtSize=="Medium" & Class=="C0")) /nrow(MyTable)`</i> <br>
+P(1)   = <i>`nrow(filter(MyTable, Class=="C1")) / nrow(MyTable)`= `r nrow(filter(MyTable, Class=="C1")) / nrow(MyTable)`</i>
+
+#### P(S|1) = `r nrow(filter(MyTable, ShirtSize=="Medium" & Class=="C1")) / nrow(MyTable) / (nrow(filter(MyTable, Class=="C1")) / nrow(MyTable))`
+
+### <I>B) USE NAÏVE BAYE'S CLASSIFIER TO FIND THE CLASS OF: </i>
+### P(Gender = F, Car Type = Family, Shirt Size = Medium)
+
+P(Gender = F, Car Type = Family, Shirt Size = Medium) = P(Gender = F)*P(Car Type = Family)*P(Shirt Size = Medium)<br>
+P(Gender = F, Car Type = Family, Shirt Size = Medium) = 10/20 * 1/20 * 8/20 = 0.01
+
+# Conclusion
+#### For this assignment, we have used the Bayes' theorem to calculate the probabilities for the data presented. In the following excersise, we will apply this theorem in order to do a classification. 
+
+# References
+#### https://sebastianraschka.com/Articles/2014_naive_bayes_1.html 
+#### https://rpubs.com/riazakhan94/naive_bayes_classifier_e1071

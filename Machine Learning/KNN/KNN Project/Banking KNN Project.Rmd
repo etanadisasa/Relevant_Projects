@@ -1,0 +1,102 @@
+---
+title: "KNN Project"
+author: "Etana Disasa"
+date: "9/16/2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(class)
+library(reshape)
+library(Rfast)
+library(caret)
+library(dplyr)
+```
+# Introduction
+This week's project will use KNN to analyze a bank marketing data in order to determine whether a product is subscription is 'yes' or 'no'. We will also examine if changing the K value changes our error rate. This data has 4521 observations. The process for this assignment will be acquiring and exploring the data, dividing the data in 8:2 ratio, perform prediction using KNN with two k-values, and finally, explain the results. 
+
+#Methods
+
+### Acquiring and Exploring the Data
+The data we are using has been downloaded and placed in the local folder as 'bank.csv'. Because this file is semi-colon seperated data, we have used the function `read.delim` and specify the separator to read the data. 
+
+```{r}
+MyBank <- read.delim(file = "bank.csv", sep = ";")
+head(MyBank, n=5)
+```
+
+It appears that the product subscription information is recorded under the column name `y`. Several variables, including `y` are factors. In order for KNN function to work, we would need to change these variables into numeric values. Therefore, we would change them as follows. 
+```{r}
+MyBank$y <- as.numeric(MyBank$y)
+MyBank$job <- as.numeric(MyBank$job)
+MyBank$marital <- as.numeric(MyBank$marital)
+MyBank$education <- as.numeric(MyBank$education)
+MyBank$default <- as.numeric(MyBank$default)
+MyBank$housing <- as.numeric(MyBank$housing)
+MyBank$loan <- as.numeric(MyBank$loan)
+MyBank$contact <- as.numeric(MyBank$contact)
+MyBank$month <- as.numeric(MyBank$month)
+MyBank$poutcome <- as.numeric(MyBank$poutcome)
+str(MyBank)
+
+```
+
+### Divide the Data into (8:2) Ratio
+```{r}
+set.seed(60) # For academic purposes when using a pseudorandom function
+MyBank$Set <- sample(c("training","test"), nrow(MyBank), replace = TRUE, prob = c(0.8, 0.2)) 
+head(MyBank$Set, n = 10)
+```
+
+```{r}
+MyBankTraining <- subset(MyBank, Set == "training", select = 1 : 17)
+MyBankTest <- subset(MyBank, Set == "test", select = 1 : 17)
+nrow(MyBankTraining) + nrow(MyBankTest) # Should be 4521
+```
+
+We have <b>`r nrow(MyBankTest)`</b> predictions we will be doing. 
+
+### KNN with k-value = 1
+We will not set K `k = 1` for our prediction. 
+```{r}
+MyPrediction <- class::knn(MyBankTraining, MyBankTest, cl = MyBankTraining$y, k =1)
+MyActual <- MyBankTest$y
+MyConfusionMatrix1 <- table(MyActual, MyPrediction)
+MyConfusionMatrix1
+```
+
+### KNN with k-value = 5
+```{r}
+MyPrediction <- class::knn(MyBankTraining, MyBankTest, cl = MyBankTraining$y, k = 5) 
+MyActual <- MyBankTest$y
+MyConfusionMatrix2 <- table(MyActual, MyPrediction)
+MyConfusionMatrix2
+```
+### Report Error Rate 
+```{r}
+MyErrorRate1 <- ((MyConfusionMatrix1[1,2] + MyConfusionMatrix1[2,1])/nrow(MyBankTest))
+MyErrorRate2 <- ((MyConfusionMatrix2[1,2] + MyConfusionMatrix2[2,1])/nrow(MyBankTest))
+MyError <- data.frame(KValue=c("1","5"),
+                      ErrorRate=c(MyErrorRate1,MyErrorRate2)
+                      )
+MyError
+```
+
+The total number of predications we made were `nrow(MyBankTest)` = `r nrow(MyBankTest)` When K = 1, the error rate is `r MyErrorRate1 * 100`%. When K = 5, the error rate drops to `r MyErrorRate2 * 100`%. In other words, the error was reduced by `r ((MyErrorRate1 - MyErrorRate2)/MyErrorRate1)*100`%.
+
+### Plotting the Error Rate
+```{r}
+ggplot(MyError, aes(x=KValue, y=ErrorRate),) +
+    labs(x= "K Value", y="Error Rate", title = "Error Rates with Change in K", subtitle = "When the K-Value changes from 1 to 5, error rate drops significantly.") +
+    geom_point() +
+    geom_segment(aes(x=KValue, xend=KValue, y=ErrorRate, yend=0))
+```
+# Conclusion
+
+The plot above shows how the error rate of our prediction significanly lowers as the k-value goes from 1 to 5. As KNN does prediciton or classification using k-values (distance from a particular data point), then changing the data type to numeric value will be a necessity for variable that will be included into the prediciton process. 
+
+# References
+https://ggplot2.tidyverse.org/reference/labs.html

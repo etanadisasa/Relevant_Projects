@@ -1,0 +1,94 @@
+---
+title: "Abalone Project"
+author: "Etana Disasa"
+date: "10/29/2019"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+---
+```{r echo = FALSE, messages = FALSE, warning = FALSE}
+library(data.table)
+library(rpart)
+library(rpart.plot)
+library(neuralnet)
+library(randomForest)
+library(caret)
+```
+# Introduction
+##### This last project for this class uses a dataset about abalons. We will use our choice of predictors to predict the age of this particular type of snail by taking several data points registered. After that, we will use a 10-fold Cross Validation to see if the predictors performed well or otherwise. 
+
+# Methods
+##### The predictors I will be using are KNN and Decision Tree
+
+## Acquiring and Exploring Data
+##### I have downloaded the dataset from the intnernet and now will be using it from a local folder. The dataset does not come with a header. Given the dataset description, I have renamed the generic variable names into appropriate ones. Furthermore, I will factorize the `Rings` variable which is the age of the abalone (actually it is the ring size adding 1.5 to be exact per the description) given the predictors I will be using. Additionally, I will  convert the `Sex` variable from factor to numeric for the predictors to work. 
+```{r}
+MyData <- read.csv("abalone.data", header = FALSE)
+names(MyData)[1:9] <- c("Sex", "Length", "Diameter", "Height", "Whole_Weight", "Shucked_Weight", "Viscera_Weight", "Shell_Weight", "Rings")
+# Per the data discription, the age of a abalone is 1.5 + the rings registered. Therefore, we will have a new variable where we register the age of the abalone. 
+MyData$Rings <- factor(MyData$Rings)
+MyData$Sex <- as.numeric(MyData$Sex)
+str(MyData)
+```
+
+### Splitting Data
+```{r}
+MySample <- sample(4177, round(4177*0.8, digits = 0))
+MyTrain <- MyData[MySample, ]
+MyTest <- MyData[-MySample, ]
+```
+
+#### Prediction using KNN
+```{r}
+MyPredict1 <- class::knn(MyTrain, MyTest, cl = MyTrain$Rings, k = 1) 
+MyActual <- MyTest$Rings
+MyTable <- table(MyActual, MyPredict1)
+confusionMatrix(MyTable)
+```
+
+### Prediction Using Decision Tree
+```{r}
+MyPredict2 <- rpart(Rings~., MyTrain, method = "class")
+prp(MyPredict2)
+pred <- predict(MyPredict2, MyTest, type = "class")
+MyTable <- table(MyTest$Rings, pred)
+MyTable
+confusionMatrix(MyTable)
+```
+
+### 10-Fold Cross Validation of KNN Predictor
+```{r}
+# define training control
+train_control <- trainControl(method="cv", number=10)
+# train the model
+model <- train(Rings~., data =  MyData, trControl = train_control, method = "kknn")
+# summarize results
+predictions <- predict(model, MyData)
+confusionMatrix(MyData$Rings, predictions)
+```
+
+##### The above 10-fold cross validation for KNN shows that it perfromed its prediction with an approximately 80% accuracy with the given dataset. Our model with the test and train dataset perfromed much higher than that. 
+
+
+### 10-Fold Cross Validation of the Decision Tree
+```{r}
+# define training control
+train_control <- trainControl(method="cv", number=10)
+# train the model
+model <- train(Rings~., data =  MyData, trControl = train_control, method = "rpart")
+# summarize results
+predictions <- predict(model, MyData)
+confusionMatrix(MyData$Rings, predictions)
+```
+
+##### The Decision Tree predictor perfromed with a low accuracy rate not so much different from our prediction. 
+
+
+# Conclusion
+##### This is telling that given a particular dataset, a generic model or our own application of supervised learning may yielf different results. Learning the `CARET` library's `train` function using different code names for the known predictors/classifiers was a lot of fun. Furthermore, setting how many times the predictors/classifiers need to run the models is also a new learning process for me. In conclusion, I cannot emphasize enough how factorizing or numerizing datasets/variables is very important given what kind of predictor/classifier one is using. 
+
+# References
+##### https://machinelearningmastery.com/how-to-estimate-model-accuracy-in-r-using-the-caret-package/ <br>
+##### https://dataaspirant.com/2017/02/03/decision-tree-classifier-implementation-in-r/<br>
+##### https://topepo.github.io/caret/train-models-by-tag.html#Random_Forest<br>
